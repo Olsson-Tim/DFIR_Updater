@@ -5,25 +5,47 @@ A Python GUI application for updating software on offline Windows workstations. 
 ## Features
 
 - Modern dark-themed GUI using CustomTkinter
-- Lists software with installation status
+- Lists software with installation status and version information
 - Updates software using PowerShell commands
 - Progress tracking for updates
 - Detailed logging of update activities
 - Silent installation support
+- External configuration file for easy customization
 
 ## Requirements
 
 - Windows OS
-- Python 3.7 or higher
+- Python 3.7 or higher (for running from source)
 - CustomTkinter library
+
+## Directory Structure
+
+```
+DFIR_Updater/
+├── assets/                 # Icons and other resources
+├── dist/                   # Packaged executables (created during build)
+├── build/                  # Build artifacts (created during build)
+├── src/                    # Source code
+├── scripts/                # Utility scripts
+├── programs.json           # Configuration file
+├── programs_template.json  # Configuration template
+├── requirements.txt        # Python dependencies
+├── README.md               # This file
+├── build.bat               # Build script
+├── run_updater.bat         # Run script for source version
+├── run_packaged.bat        # Run script for packaged version
+├── setup.bat               # Setup script
+└── config_helper.bat       # Configuration helper script
+```
 
 ## Installation
 
 1. Install Python from https://www.python.org/downloads/
-2. Install CustomTkinter:
+2. Install required dependencies:
    ```
-   pip install customtkinter
+   pip install -r requirements.txt
    ```
+   Or run `setup.bat` which will do this automatically.
 
 ## Configuration
 
@@ -38,7 +60,7 @@ Software programs are configured in the `programs.json` file. Edit this file to 
         "silent_args": "/S",
         "version_check": {
             "type": "exe_version",
-            "path": "C:\\Path\\To\\Executable.exe"
+            "path": "C:\\Program Files\\Software\\software.exe"
         },
         "new_version": "1.2.3"
     }
@@ -99,14 +121,55 @@ The `assets` directory contains icons and other resources for the application. T
 
 ## Usage
 
+### Running from Source
+
 1. Ensure installers are available at the specified paths
 2. Run the application using one of these methods:
    - Double-click `run_updater.bat`
    - Run from command line:
      ```
-     python main.py
+     python src/main.py
      ```
-3. Click "Update" buttons to install/update software
+
+### Running Packaged Version
+
+1. Run `build.bat` to create the executable
+2. Run the application using one of these methods:
+   - Double-click `run_packaged.bat`
+   - Navigate to `dist/DFIR_Software_Updater` and run `DFIR_Software_Updater.exe`
+
+## Packaging as Executable
+
+To package the application as a standalone executable:
+
+1. Run `build.bat` to create the executable
+2. The executable will be created in the `dist/DFIR_Software_Updater` directory
+3. Run `run_packaged.bat` to launch the packaged application
+
+### Build Requirements
+
+- Python 3.7 or higher
+- PyInstaller
+- Pillow (for icon handling)
+
+These dependencies will be automatically installed when running `build.bat`.
+
+### Distribution
+
+To distribute the application, copy the entire `dist/DFIR_Software_Updater` directory to the target system. The directory contains:
+- `DFIR_Software_Updater.exe` - The main executable
+- `programs.json` - Configuration file (can be modified after packaging)
+- `programs_template.json` - Template for creating new configurations
+- `assets/` - Icon and other resource files
+
+### Creating a Single File Executable
+
+To create a single-file executable instead of a directory, use the `--onefile` option:
+```
+pyinstaller --noconfirm --onefile --windowed --hidden-import=customtkinter --add-data "programs.json;." --add-data "programs_template.json;." --add-data "assets;assets" --icon "assets/icon.ico" --name "DFIR_Software_Updater" src/main.py
+```
+
+Note: Single-file executables are slower to start as they need to extract files to a temporary directory on each run. When using the single-file option, the `programs.json` file will be created in the same directory as the executable when the application is first run.
 
 ## Silent Installation Arguments
 

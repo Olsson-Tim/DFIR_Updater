@@ -1,4 +1,4 @@
 @echo off
 title DFIR Software Updater
-python main.py
+python src/main.py
 pause
