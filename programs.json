@@ -1,0 +1,58 @@
+[
+    {
+        "name": "Wireshark",
+        "install_path": "C:\\Program Files\\Wireshark",
+        "installer_path": "C:\\Installers\\Wireshark-win64-4.2.5.exe",
+        "silent_args": "/S",
+        "version_check": {
+            "type": "exe_version",
+            "path": "C:\\Program Files\\Wireshark\\Wireshark.exe"
+        },
+        "new_version": "4.2.5"
+    },
+    {
+        "name": "Python 3.11",
+        "install_path": "C:\\Python311",
+        "installer_path": "C:\\Installers\\python-3.11.5-amd64.exe",
+        "silent_args": "/quiet InstallAllUsers=1 PrependPath=1 Include_test=0",
+        "version_check": {
+            "type": "cmd_output",
+            "command": "C:\\Python311\\python.exe --version",
+            "regex": "Python ([0-9.]+)"
+        },
+        "new_version": "3.11.5"
+    },
+    {
+        "name": "7-Zip",
+        "install_path": "C:\\Program Files\\7-Zip",
+        "installer_path": "C:\\Installers\\7z2301-x64.exe",
+        "silent_args": "/S",
+        "version_check": {
+            "type": "exe_version",
+            "path": "C:\\Program Files\\7-Zip\\7z.exe"
+        },
+        "new_version": "25.01"
+    },
+    {
+        "name": "Notepad++",
+        "install_path": "C:\\Program Files\\Notepad++",
+        "installer_path": "C:\\Installers\\npp.8.5.8.Installer.x64.exe",
+        "silent_args": "/S",
+        "version_check": {
+            "type": "file_content",
+            "path": "C:\\Program Files\\Notepad++\\version.txt",
+            "regex": "([0-9.]+)"
+        },
+        "new_version": "8.5.8"
+    },
+    {
+        "name": "Sysinternals",
+        "install_path": "C:\\Tools\\Sysinternals",
+        "installer_path": "C:\\Installers\\sysinternals-suite.zip",
+        "silent_args": "",
+        "version_check": {
+            "type": "none"
+        },
+        "new_version": "N/A"
+    }
+]

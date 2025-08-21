@@ -1,0 +1,25 @@
+[
+    {
+        "name": "Example Program",
+        "install_path": "C:\\Program Files\\Example",
+        "installer_path": "C:\\Installers\\example-installer.exe",
+        "silent_args": "/S",
+        "version_check": {
+            "type": "exe_version",
+            "path": "C:\\Program Files\\Example\\example.exe"
+        },
+        "new_version": "1.0.0"
+    },
+    {
+        "name": "Command Line Tool",
+        "install_path": "C:\\Tools\\CLI_Tool",
+        "installer_path": "C:\\Installers\\cli-tool-installer.exe",
+        "silent_args": "/S",
+        "version_check": {
+            "type": "cmd_output",
+            "command": "C:\\Tools\\CLI_Tool\\tool.exe --version",
+            "regex": "Version ([0-9.]+)"
+        },
+        "new_version": "2.5.1"
+    }
+]
