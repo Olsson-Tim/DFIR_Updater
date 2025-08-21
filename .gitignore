@@ -2,6 +2,10 @@
 build/
 dist/
 
+# Configuration files (users will modify these)
+programs.json
+programs_template.json
+
 # Python cache files
 __pycache__/
 *.pyc
