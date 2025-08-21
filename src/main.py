@@ -29,6 +29,9 @@ class SoftwareUpdater:
         # Load program data from JSON file
         self.programs_data = self.load_programs()
         
+        # Initialize counter for Update All functionality
+        self.pending_updates = 0
+        
         self.setup_ui()
         self.check_installations()
         
@@ -202,7 +205,17 @@ class SoftwareUpdater:
             text="Update software on offline workstations",
             font=ctk.CTkFont(size=14)
         )
-        desc_label.pack(pady=(0, 20))
+        desc_label.pack(pady=(0, 10))
+        
+        # Update All button
+        self.update_all_btn = ctk.CTkButton(
+            self.main_frame,
+            text="Update All",
+            command=self.start_update_all,
+            font=ctk.CTkFont(size=16, weight="bold"),
+            height=40
+        )
+        self.update_all_btn.pack(pady=(0, 20))
         
         # Programs frame
         self.programs_frame = ctk.CTkScrollableFrame(self.main_frame, height=300)
@@ -355,6 +368,41 @@ class SoftwareUpdater:
         thread.daemon = True
         thread.start()
         
+    def start_update_all(self):
+        """Start the update process for all programs"""
+        # Disable the Update All button
+        self.update_all_btn.configure(state="disabled", text="Updating All...")
+        
+        # Get list of programs that need updating
+        programs_to_update = []
+        for i, program in enumerate(self.programs_data):
+            widget_data = self.program_widgets[i]
+            status_text = widget_data["status_label"].cget("text")
+            # Add programs that are either "Not Installed" or "Update Available"
+            if status_text in ["Not Installed", "Update Available"]:
+                programs_to_update.append((program, widget_data))
+        
+        if not programs_to_update:
+            self.log_message("No programs need updating.")
+            self.update_all_btn.configure(state="normal", text="Update All")
+            return
+            
+        self.log_message(f"Starting update for {len(programs_to_update)} programs...")
+        
+        # Start updates in separate threads
+        self.pending_updates = len(programs_to_update)
+        for program, widget_data in programs_to_update:
+            # Disable individual update button
+            widget_data["update_btn"].configure(state="disabled", text="Pending...")
+            
+            # Show progress bar
+            widget_data["progress_bar"].grid()
+            
+            # Start update in separate thread
+            thread = threading.Thread(target=self.run_update_all, args=(program, widget_data))
+            thread.daemon = True
+            thread.start()
+        
     def run_update(self, program, widget_data):
         """Run the actual update process using PowerShell"""
         self.log_message(f"Starting update for {program['name']}...")
@@ -409,6 +457,60 @@ class SoftwareUpdater:
             self.root.after(0, lambda: self.finish_update(
                 program, widget_data, f"Update error: {str(e)}", False))
                 
+    def run_update_all(self, program, widget_data):
+        """Run the actual update process using PowerShell for Update All functionality"""
+        self.log_message(f"Starting update for {program['name']}...")
+        
+        # Check if installer exists
+        if not os.path.exists(program["installer_path"]):
+            self.root.after(0, lambda: self.finish_update_all(
+                program, widget_data, f"Installer not found: {program['installer_path']}", False))
+            return
+            
+        try:
+            # Handle different file types
+            installer_path = program["installer_path"]
+            file_ext = os.path.splitext(installer_path)[1].lower()
+            
+            if file_ext == ".zip":
+                # Special handling for zip files (extract instead of execute)
+                ps_command = (
+                    f"Expand-Archive -Path '{installer_path}' "
+                    f"-DestinationPath '{program['install_path']}' -Force"
+                )
+                self.log_message(f"Extracting: {ps_command}")
+            else:
+                # Construct PowerShell command for executables
+                ps_command = (
+                    f"Start-Process -FilePath '{installer_path}' "
+                    f"-ArgumentList '{program['silent_args']}' -Wait"
+                )
+                self.log_message(f"Executing: {ps_command}")
+            
+            # Run PowerShell with the command
+            result = subprocess.run(
+                ["powershell", "-Command", ps_command],
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 minute timeout
+            )
+            
+            # Check result
+            if result.returncode == 0:
+                self.root.after(0, lambda: self.finish_update_all(
+                    program, widget_data, f"{program['name']} updated successfully!", True))
+            else:
+                error_msg = result.stderr if result.stderr else "Unknown error occurred"
+                self.root.after(0, lambda: self.finish_update_all(
+                    program, widget_data, f"Update failed: {error_msg}", False))
+                
+        except subprocess.TimeoutExpired:
+            self.root.after(0, lambda: self.finish_update_all(
+                program, widget_data, "Update timed out after 5 minutes", False))
+        except Exception as e:
+            self.root.after(0, lambda: self.finish_update_all(
+                program, widget_data, f"Update error: {str(e)}", False))
+                
     def finish_update(self, program, widget_data, message, success):
         """Finish the update process and update UI"""
         # Hide progress bar
@@ -431,6 +533,31 @@ class SoftwareUpdater:
         # Show completion message if needed
         if success:
             messagebox.showinfo("Update Complete", message)
+            
+    def finish_update_all(self, program, widget_data, message, success):
+        """Finish the update process for Update All functionality and update UI"""
+        # Hide progress bar
+        widget_data["progress_bar"].grid_forget()
+        
+        # Update status
+        status_text = "Installed" if success else "Error"
+        status_color = "green" if success else "red"
+        widget_data["status_label"].configure(text=status_text, text_color=status_color)
+        
+        # Log message
+        self.log_message(message)
+        
+        # Update status bar
+        self.status_label.configure(text=message)
+        
+        # Decrement pending updates counter
+        self.pending_updates -= 1
+        
+        # If all updates are done, re-enable the Update All button
+        if self.pending_updates <= 0:
+            self.update_all_btn.configure(state="normal", text="Update All")
+            self.log_message("All updates completed.")
+            messagebox.showinfo("Update Complete", "All programs have been updated.")
             
     def log_message(self, message):
         """Add a message to the log"""
