@@ -117,7 +117,7 @@ class SoftwareUpdater:
                     return "Not Installed"
                     
                 # Use PowerShell to get file version
-                ps_command = f"(Get-Item '{exe_path}').VersionInfo.ProductVersion"
+                ps_command = f"(Get-Item '{exe_path}').VersionInfo.FileVersion"
                 result = subprocess.run(
                     ["powershell", "-Command", ps_command],
                     capture_output=True,
